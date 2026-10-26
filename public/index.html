@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>Highway Hustle · multiplayer bike brawl racing</title>
+  <meta name="description" content="Race motorbikes down an Indian highway with friends. Dodge trucks, autos and cows, and punch rivals off their bikes." />
+  <meta name="theme-color" content="#1a1238" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏍️</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow+Condensed:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <canvas id="game" aria-label="Race view"></canvas>
+
+  <div class="topbtns">
+    <button id="btnHelp" class="icon" aria-label="How to play">?</button>
+    <button id="btnSound" class="icon" aria-label="Mute sound">🔊</button>
+    <button id="btnCam" class="icon" aria-label="Switch camera">🚁</button>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" aria-live="off">
+    <div class="hud-left"><div class="place"><span id="hudPlace">P1</span><small id="hudOf">/1</small></div><div id="hudLap" class="lap">Lap 1/2</div></div>
+    <div class="hud-mid"><div id="hudTrack" class="track" aria-hidden="true"></div><div id="hudClock" class="clock" hidden></div></div>
+    <div class="hud-right"><div class="speed"><span id="hudSpeed">0</span><small>km/h</small></div>
+      <div class="health" aria-label="Health"><i id="hudHealth"></i></div></div>
+  </div>
+  <div id="countdown" hidden></div>
+  <div id="banner" hidden></div>
+  <div id="feed" aria-live="polite"></div>
+
+  <div id="touch" aria-hidden="true">
+    <div class="pad left">
+      <button data-key="left">◀</button><button data-key="right">▶</button>
+    </div>
+    <div class="pad right">
+      <div class="punches"><button data-key="pl" class="pu">👊 L</button><button data-key="pr" class="pu">R 👊</button></div>
+      <button data-key="down" class="brake">Brake</button>
+    </div>
+  </div>
+
+  <!-- Home -->
+  <section id="home" class="screen" hidden>
+    <div class="panel">
+      <h1 class="logo"><span>Highway</span><span>Hustle</span></h1>
+      <p class="lede">Race the NH-24 with friends. Dodge trucks, autos and cows. Punch rivals off their bikes.</p>
+      <label class="field"><span>Rider name</span><input id="name" maxlength="14" autocomplete="nickname" placeholder="e.g. Sandeep" /></label>
+      <button id="btnQuick" class="btn hot">Quick race vs bots</button>
+      <div class="row">
+        <button id="btnCreate" class="btn">Create room</button>
+      </div>
+      <div class="join">
+        <input id="code" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters" aria-label="Room code" />
+        <button id="btnJoin" class="btn">Join room</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lobby -->
+  <section id="lobby" class="screen" hidden>
+    <div class="panel">
+      <p class="muted center">Room code</p>
+      <div id="lobbyCode" class="code-big">----</div>
+      <button id="btnShare" class="btn">Share invite link</button>
+      <h2>Riders</h2>
+      <ul id="lobbyPlayers" class="players"></ul>
+      <div id="lobbySettings"></div>
+      <button id="btnStart" class="btn hot">Start race</button>
+      <p id="lobbyWait" class="muted center" hidden></p>
+      <button class="btnLeave link">Leave room</button>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section id="results" class="screen" hidden>
+    <div class="panel">
+      <h2 id="resTitle" class="res-title">Race results</h2>
+      <table class="res"><thead><tr><th>#</th><th>Rider</th><th>Time</th><th>KOs</th></tr></thead><tbody id="resList"></tbody></table>
+      <button id="btnAgain" class="btn hot">Race again</button>
+      <p id="resWait" class="muted center">Waiting for the host.</p>
+      <button class="btnLeave link">Leave room</button>
+    </div>
+  </section>
+
+  <!-- Help -->
+  <div id="help" hidden>
+    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="helpT">
+      <h2 id="helpT">How to ride</h2>
+      <table class="keys">
+        <tr><td>Steer</td><td><kbd>←</kbd><kbd>→</kbd> or <kbd>A</kbd><kbd>D</kbd></td></tr>
+        <tr><td>Throttle / brake</td><td><kbd>↑</kbd><kbd>↓</kbd> or <kbd>W</kbd><kbd>S</kbd></td></tr>
+        <tr><td>Punch left / right</td><td><kbd>Z</kbd><kbd>X</kbd> or <kbd>J</kbd><kbd>K</kbd></td></tr>
+        <tr><td>Switch camera</td><td><kbd>C</kbd> or 🚁 button</td></tr>
+      </table>
+      <p class="muted">On a phone the bike accelerates by itself. Use the arrows to steer, the fists to punch and Brake to slow down.</p>
+      <p>Hitting traffic at speed costs health. Lose it all and you’re knocked out for 3 seconds. Ride next to a rival and punch toward them to do the same to them.</p>
+      <button id="helpClose" class="btn hot">Got it</button>
+    </div>
+  </div>
+
+  <div id="toast" role="status"></div>
+  <div id="conn" hidden>Connection lost. Reconnecting…</div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/shared.js"></script>
+  <script src="/sprites.js"></script>
+  <script src="/game.js"></script>
+</body>
+</html>

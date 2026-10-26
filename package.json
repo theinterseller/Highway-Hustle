@@ -1,0 +1,21 @@
+{
+  "name": "highway-hustle",
+  "version": "1.0.0",
+  "description": "A real-time multiplayer motorbike combat racing game on an Indian highway.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/simulate.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.7.5"
+  },
+  "license": "MIT"
+}
